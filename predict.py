@@ -3,6 +3,20 @@ import json
 import numpy as np
 import xgboost as xgb
 from stable_baselines3 import PPO
+from datetime import datetime
+
+# --- HELPER FUNCTIONS ---
+def convert_to_serializable(obj):
+    """Convert numpy types to Python native types for JSON serialization"""
+    if isinstance(obj, (np.integer, np.floating)):
+        return float(obj) if isinstance(obj, np.floating) else int(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {k: convert_to_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_to_serializable(item) for item in obj]
+    return obj
 
 # --- MODEL LOADING ---
 MODEL_PATH = "models/fairness_rl_model.zip"
@@ -60,8 +74,8 @@ def predict_from_payload(payload):
         features = build_env_features(rec)
         # Assuming XGB model handles the 19 features (excluding xgb_suggestion)
         xgb_val = (float(XGB_MODEL.predict(xgb.DMatrix(np.array([features[:-1]])))[0])/10) if XGB_MODEL else 0.0
-        rec["xgboost_suggestion"] = xgb_val
-        scored_recipients.append({"data": rec, "xgb_score": xgb_val, "final_allocation": 0.0})
+        rec["xgboost_suggestion"] = float(xgb_val)
+        scored_recipients.append({"data": rec, "xgb_score": float(xgb_val), "final_allocation": 0.0})
 
     # Sort by priority (XGB Score) so we help the most vulnerable first
     scored_recipients.sort(key=lambda x: x['xgb_score'], reverse=True)
@@ -80,13 +94,14 @@ def predict_from_payload(payload):
             action, _ = RL_MODEL.predict(state, deterministic=True)
             # Map [-1, 1] to [min_alloc, max_alloc]
             alloc = min_alloc + (action[0] + 1) * 0.5 * (max_alloc_default - min_alloc)
+            alloc = float(alloc)  # Convert numpy to Python float
         else:
             alloc = min_alloc
 
         # Initial constraint check
-        alloc = np.clip(alloc, min_alloc, max_alloc_default)
+        alloc = float(np.clip(alloc, min_alloc, max_alloc_default))
         if remaining_budget >= min_alloc:
-            actual = min(alloc, remaining_budget)
+            actual = float(min(alloc, remaining_budget))
             item["final_allocation"] = actual
             remaining_budget -= actual
         else:
@@ -121,8 +136,8 @@ def predict_from_payload(payload):
             share = min(potential_extra, remaining_budget * need_ratio)
             
             if share > 1:
-                item["final_allocation"] += share
-                remaining_budget -= share
+                item["final_allocation"] = float(item["final_allocation"] + share)
+                remaining_budget = float(remaining_budget - share)
                 distributed_this_round += share
         
         if distributed_this_round < 1:
@@ -132,11 +147,11 @@ def predict_from_payload(payload):
     final_output = []
     cases_served = 0
     for item in scored_recipients:
-        alloc = round(item["final_allocation"], 2)
+        alloc = float(round(item["final_allocation"], 2))
         if alloc >= min_alloc: cases_served += 1
         final_output.append({
             "RecipientId": item["data"].get("RecipientId"),
-            "xgb_reference": round(item["xgb_score"], 2),
+            "xgb_reference": float(round(item["xgb_score"], 2)),
             "rl_allocation": alloc,
             "met_min": bool(alloc >= min_alloc)
         })
@@ -144,12 +159,18 @@ def predict_from_payload(payload):
     return {
         "allocations": final_output,
         "summary": {
-            "total_budget": global_budget,
-            "total_allocated": round(global_budget - remaining_budget, 2),
-            "people_helped": cases_served,
+            "total_budget": float(global_budget),
+            "total_allocated": float(round(global_budget - remaining_budget, 2)),
+            "people_helped": int(cases_served),
             "min_target_met": bool(cases_served >= min_people)
-        }
+        },
+        "timestamp": datetime.now().isoformat()
     }
+
+def predict_from_payload_serializable(payload):
+    """Wrapper that ensures output is JSON-serializable"""
+    result = predict_from_payload(payload)
+    return convert_to_serializable(result)
 if __name__ == "__main__":
     # Test with your provided JSON data
     with open("in/example_predict.json", "r") as f:
