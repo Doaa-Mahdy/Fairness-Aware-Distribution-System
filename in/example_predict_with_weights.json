@@ -1,0 +1,57 @@
+{
+  "params": {
+    "budget": 500000,
+    "min_allocation": 50.0,
+    "min_people_to_help": 100,
+    "_comment_1": "Feature weights: Set values >1.0 to emphasize, <1.0 to de-emphasize, 0.0 to ignore",
+    "feature_weights": {
+      "Med_Disability": 2.0,
+      "Med_Chronic": 1.8,
+      "Med_Urgent": 2.5,
+      "Demo_FamilySize": 1.5,
+      "Demo_DeceasedCount": 2.0,
+      "House_Rent": 1.3
+    },
+    "_comment_2": "Exclude features: Completely ignore these features in decision making",
+    "exclude_features": [
+      "Fin_Balance",
+      "Case_Status"
+    ]
+  },
+  "data": [
+    {
+      "RecipientId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "CaseMetadata": {
+        "Status": 0,
+        "ReopenedCount": 1,
+        "IsActive": true
+      },
+      "Demographics": {
+        "FamilySize": 5,
+        "DeceasedParentCount": 1,
+        "EducationBurden": 14,
+        "MaritalVulnerability": 5
+      },
+      "MedicalProfile": {
+        "DisabilityWeight": 7.0,
+        "ChronicConditionWeight": 4.0,
+        "MedicationCount": 3,
+        "RequiresUrgentCare": true
+      },
+      "HousingAndLiving": {
+        "IsRented": true,
+        "MonthlyRent": 450.0,
+        "InfrastructureDeficit": 1,
+        "HasElectricity": false,
+        "OvercrowdingRatio": 0.2
+      },
+      "FinancialLiquidity": {
+        "CurrentCardBalance": 150.0,
+        "CardStatus": 1
+      },
+      "FinancialHistory": {
+        "TotalReceivedLastMonth": 250.0
+      }
+    }
+  ]
+}

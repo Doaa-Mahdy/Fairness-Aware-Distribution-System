@@ -1,0 +1,100 @@
+{
+  "params": {
+    "budget": 5000,
+    "min_allocation": 50.0,
+    "max_allocation": 1000.0,
+    "min_people_to_help": 5
+  },
+  "data": [
+    {
+      "RecipientId": "R1",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 1, "IsActive": true },
+      "Demographics": { "FamilySize": 5, "DeceasedParentCount": 1, "EducationBurden": 14, "MaritalVulnerability": 5 },
+      "MedicalProfile": { "DisabilityWeight": 7.0, "ChronicConditionWeight": 4.0, "MedicationCount": 3, "RequiresUrgentCare": true },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 450.0, "InfrastructureDeficit": 1, "HasElectricity": false, "OvercrowdingRatio": 0.2 },
+      "FinancialLiquidity": { "CurrentCardBalance": 150.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 250.0 }
+    },
+    {
+      "RecipientId": "R2",
+      "CaseMetadata": { "Status": 1, "ReopenedCount": 0, "IsActive": true },
+      "Demographics": { "FamilySize": 3, "DeceasedParentCount": 0, "EducationBurden": 6, "MaritalVulnerability": 2 },
+      "MedicalProfile": { "DisabilityWeight": 0.0, "ChronicConditionWeight": 2.0, "MedicationCount": 1, "RequiresUrgentCare": false },
+      "HousingAndLiving": { "IsRented": false, "MonthlyRent": 0.0, "InfrastructureDeficit": 0, "HasElectricity": true, "OvercrowdingRatio": 0.1 },
+      "FinancialLiquidity": { "CurrentCardBalance": 80.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 100.0 }
+    },
+    {
+      "RecipientId": "R3",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 2, "IsActive": true },
+      "Demographics": { "FamilySize": 7, "DeceasedParentCount": 2, "EducationBurden": 18, "MaritalVulnerability": 7 },
+      "MedicalProfile": { "DisabilityWeight": 9.0, "ChronicConditionWeight": 6.0, "MedicationCount": 5, "RequiresUrgentCare": true },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 600.0, "InfrastructureDeficit": 2, "HasElectricity": false, "OvercrowdingRatio": 0.5 },
+      "FinancialLiquidity": { "CurrentCardBalance": 40.0, "CardStatus": 0 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 0.0 }
+    },
+    {
+      "RecipientId": "R4",
+      "CaseMetadata": { "Status": 1, "ReopenedCount": 0, "IsActive": true },
+      "Demographics": { "FamilySize": 2, "DeceasedParentCount": 0, "EducationBurden": 4, "MaritalVulnerability": 1 },
+      "MedicalProfile": { "DisabilityWeight": 1.0, "ChronicConditionWeight": 1.0, "MedicationCount": 1, "RequiresUrgentCare": false },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 300.0, "InfrastructureDeficit": 0, "HasElectricity": true, "OvercrowdingRatio": 0.0 },
+      "FinancialLiquidity": { "CurrentCardBalance": 200.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 300.0 }
+    },
+    {
+      "RecipientId": "R5",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 3, "IsActive": true },
+      "Demographics": { "FamilySize": 6, "DeceasedParentCount": 1, "EducationBurden": 12, "MaritalVulnerability": 6 },
+      "MedicalProfile": { "DisabilityWeight": 5.0, "ChronicConditionWeight": 3.0, "MedicationCount": 4, "RequiresUrgentCare": true },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 500.0, "InfrastructureDeficit": 1, "HasElectricity": true, "OvercrowdingRatio": 0.3 },
+      "FinancialLiquidity": { "CurrentCardBalance": 60.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 150.0 }
+    },
+    {
+      "RecipientId": "R6",
+      "CaseMetadata": { "Status": 1, "ReopenedCount": 0, "IsActive": true },
+      "Demographics": { "FamilySize": 4, "DeceasedParentCount": 0, "EducationBurden": 10, "MaritalVulnerability": 3 },
+      "MedicalProfile": { "DisabilityWeight": 2.0, "ChronicConditionWeight": 1.0, "MedicationCount": 2, "RequiresUrgentCare": false },
+      "HousingAndLiving": { "IsRented": false, "MonthlyRent": 0.0, "InfrastructureDeficit": 0, "HasElectricity": true, "OvercrowdingRatio": 0.15 },
+      "FinancialLiquidity": { "CurrentCardBalance": 120.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 200.0 }
+    },
+    {
+      "RecipientId": "R7",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 1, "IsActive": true },
+      "Demographics": { "FamilySize": 8, "DeceasedParentCount": 2, "EducationBurden": 20, "MaritalVulnerability": 8 },
+      "MedicalProfile": { "DisabilityWeight": 8.0, "ChronicConditionWeight": 5.0, "MedicationCount": 6, "RequiresUrgentCare": true },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 700.0, "InfrastructureDeficit": 3, "HasElectricity": false, "OvercrowdingRatio": 0.6 },
+      "FinancialLiquidity": { "CurrentCardBalance": 20.0, "CardStatus": 0 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 0.0 }
+    },
+    {
+      "RecipientId": "R8",
+      "CaseMetadata": { "Status": 1, "ReopenedCount": 0, "IsActive": true },
+      "Demographics": { "FamilySize": 1, "DeceasedParentCount": 0, "EducationBurden": 0, "MaritalVulnerability": 0 },
+      "MedicalProfile": { "DisabilityWeight": 0.0, "ChronicConditionWeight": 0.0, "MedicationCount": 0, "RequiresUrgentCare": false },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 250.0, "InfrastructureDeficit": 0, "HasElectricity": true, "OvercrowdingRatio": 0.0 },
+      "FinancialLiquidity": { "CurrentCardBalance": 300.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 400.0 }
+    },
+    {
+      "RecipientId": "R9",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 2, "IsActive": true },
+      "Demographics": { "FamilySize": 5, "DeceasedParentCount": 1, "EducationBurden": 9, "MaritalVulnerability": 4 },
+      "MedicalProfile": { "DisabilityWeight": 4.0, "ChronicConditionWeight": 2.0, "MedicationCount": 2, "RequiresUrgentCare": false },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 400.0, "InfrastructureDeficit": 1, "HasElectricity": true, "OvercrowdingRatio": 0.25 },
+      "FinancialLiquidity": { "CurrentCardBalance": 90.0, "CardStatus": 1 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 120.0 }
+    },
+    {
+      "RecipientId": "R10",
+      "CaseMetadata": { "Status": 0, "ReopenedCount": 4, "IsActive": true },
+      "Demographics": { "FamilySize": 9, "DeceasedParentCount": 2, "EducationBurden": 22, "MaritalVulnerability": 9 },
+      "MedicalProfile": { "DisabilityWeight": 10.0, "ChronicConditionWeight": 7.0, "MedicationCount": 7, "RequiresUrgentCare": true },
+      "HousingAndLiving": { "IsRented": true, "MonthlyRent": 800.0, "InfrastructureDeficit": 3, "HasElectricity": false, "OvercrowdingRatio": 0.7 },
+      "FinancialLiquidity": { "CurrentCardBalance": 10.0, "CardStatus": 0 },
+      "FinancialHistory": { "TotalReceivedLastMonth": 0.0 }
+    }
+  ]
+}
