@@ -1,9 +1,12 @@
 import os
 import json
 import numpy as np
+import pandas as pd
 import xgboost as xgb
 from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv
 from datetime import datetime
+from env import FairnessEnv
 
 # --- HELPER FUNCTIONS ---
 def convert_to_serializable(obj):
@@ -59,6 +62,81 @@ def build_env_features(recipient_data: dict) -> list:
         recipient_data.get("xgboost_suggestion", 0)
     ]
 
+FEATURE_COLS = [
+    'case_status', 'case_reopened', 'case_isactive', 'demo_familysize',
+    'demo_deceasedcount', 'demo_eduburden', 'demo_maritalvuln', 'med_disability',
+    'med_chronic', 'med_urgent', 'med_count', 'house_isrented', 'house_rent',
+    'house_infra', 'house_elec', 'house_ratio', 'fin_balance', 'fin_status',
+    'hist_lastmonth', 'xgboost_suggestion'
+]
+
+
+def _build_payload_df(scored_recipients, params):
+    rows = []
+    for item in scored_recipients:
+        rec_data = item['data']
+        features = build_env_features(rec_data)
+        row = dict(zip(FEATURE_COLS, features))
+        row.update({
+            'group_id': 0,
+            'max_budget': float(params.get('budget', 0)),
+            'min_allocation': float(params.get('min_allocation', 50.0)),
+            'max_allocation': float(params.get('max_allocation', params.get('budget', 0))),
+            'min_cases': int(params.get('min_people_to_help', 1))
+        })
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def _post_train_predict(scored_recipients, params, epochs=100, timesteps=100):
+    payload_df = _build_payload_df(scored_recipients, params)
+    if payload_df.empty:
+        return None, None
+
+    env = DummyVecEnv([lambda: FairnessEnv(payload_df)])
+    if os.path.exists(MODEL_PATH) and RL_MODEL:
+        model = PPO.load(MODEL_PATH, env=env)
+    else:
+        model = PPO('MlpPolicy', env, verbose=0)
+
+    model.set_random_seed(0)
+    for _ in range(epochs):
+        model.learn(total_timesteps=timesteps)
+    print("Learning Done")
+    _reset_res = env.reset()
+
+    if isinstance(_reset_res, tuple):
+        obs = _reset_res[0]
+    else:
+        obs = _reset_res
+
+    done = False
+    reward_val = 0.0
+    step = 0
+
+    best_allocations = None
+    while not done:
+        action, _ = model.predict(obs, deterministic=True)
+
+        print(f"Step {step}: action={action}")
+
+        obs, rewards, dones, infos = env.step(action)
+
+        done = bool(dones[0])
+        reward_val = float(rewards[0])
+        print(
+            f"done={done}, "
+            f"remaining={env.envs[0].remaining_budget}, "
+            f"current_step={env.envs[0].current_step}"
+        )
+        step += 1
+        if dones[0]:
+            best_allocations = infos[0].get("allocations", None)
+            break
+
+    return best_allocations, reward_val
+
+
 def predict_from_payload(payload):
     params = payload.get("params", {})
     global_budget = float(params.get("budget", 0))
@@ -80,68 +158,35 @@ def predict_from_payload(payload):
     # Sort by priority (XGB Score) so we help the most vulnerable first
     scored_recipients.sort(key=lambda x: x['xgb_score'], reverse=True)
 
-    # --- STEP 2: PASS 1 (Initial RL Guess) ---
-    remaining_budget = global_budget
-    for item in scored_recipients:
-        rec_data = item["data"]
-        # Build state
-        features = np.array(build_env_features(rec_data), dtype=np.float32)
-        # Match env observation: features (20) + [B_max, min_alloc, max_alloc]
-        constraints = np.array([global_budget, min_alloc, max_alloc_default], dtype=np.float32)
-        state = np.concatenate([features, constraints])
+    # --- STEP 2: POST-TRAIN ON INPUT DATA ---
+    best_allocations, best_reward = _post_train_predict(scored_recipients, params, epochs=10, timesteps=100)
+    if best_allocations is not None:
+        for idx, item in enumerate(scored_recipients):
+            item["final_allocation"] = float(best_allocations[idx]) if idx < len(best_allocations) else 0.0
+        remaining_budget = float(global_budget - sum(item["final_allocation"] for item in scored_recipients))
+    else:
+        # Fallback: initial RL guess if post-training cannot run
+        remaining_budget = global_budget
+        for item in scored_recipients:
+            rec_data = item["data"]
+            features = np.array(build_env_features(rec_data), dtype=np.float32)
+            constraints = np.array([global_budget, min_alloc, max_alloc_default], dtype=np.float32)
+            state = np.concatenate([features, constraints])
 
-        if RL_MODEL:
-            action, _ = RL_MODEL.predict(state, deterministic=True)
-            # Map [-1, 1] to [min_alloc, max_alloc]
-            alloc = min_alloc + (action[0] + 1) * 0.5 * (max_alloc_default - min_alloc)
-            alloc = float(alloc)  # Convert numpy to Python float
-        else:
-            alloc = min_alloc
+            if RL_MODEL:
+                action, _ = RL_MODEL.predict(state, deterministic=True)
+                alloc = min_alloc + (action[0] + 1) * 0.5 * (max_alloc_default - min_alloc)
+                alloc = float(alloc)
+            else:
+                alloc = min_alloc
 
-        # Initial constraint check
-        alloc = float(np.clip(alloc, min_alloc, max_alloc_default))
-        if remaining_budget >= min_alloc:
-            actual = float(min(alloc, remaining_budget))
-            item["final_allocation"] = actual
-            remaining_budget -= actual
-        else:
-            item["final_allocation"] = 0.0 # Not enough budget left for this person
-
-    # --- STEP 3: NEED-BASED SURPLUS DISTRIBUTION ---
-    # Distribute remaining budget proportionally to vulnerability scores
-    max_iterations = 10
-    iteration = 0
-    while remaining_budget > 1 and iteration < max_iterations:
-        iteration += 1
-        distributed_this_round = 0
-        
-        # Calculate total need (sum of scores for those with room to grow)
-        eligible = [item for item in scored_recipients if item["final_allocation"] >= 0 and (max_alloc_default - item["final_allocation"]) > 1]
-        if not eligible:
-            break
-        
-        total_need = sum(item["xgb_score"] for item in eligible)
-        if total_need <= 0:
-            break
-        
-        for item in eligible:
-            if remaining_budget <= 1:
-                break
-            
-            current = item["final_allocation"]
-            potential_extra = max_alloc_default - current
-            
-            # Allocate proportional to their need (xgb_score / total_need)
-            need_ratio = item["xgb_score"] / total_need
-            share = min(potential_extra, remaining_budget * need_ratio)
-            
-            if share > 1:
-                item["final_allocation"] = float(item["final_allocation"] + share)
-                remaining_budget = float(remaining_budget - share)
-                distributed_this_round += share
-        
-        if distributed_this_round < 1:
-            break
+            alloc = float(np.clip(alloc, min_alloc, max_alloc_default))
+            if remaining_budget >= min_alloc:
+                actual = float(min(alloc, remaining_budget))
+                item["final_allocation"] = actual
+                remaining_budget -= actual
+            else:
+                item["final_allocation"] = 0.0
 
     # --- STEP 4: FINAL ASSEMBLY ---
     final_output = []
@@ -155,7 +200,7 @@ def predict_from_payload(payload):
             "rl_allocation": alloc,
             "met_min": bool(alloc >= min_alloc)
         })
-
+    print("Here")
     return {
         "allocations": final_output,
         "summary": {

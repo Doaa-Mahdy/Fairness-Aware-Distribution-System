@@ -37,7 +37,7 @@ class FairnessEnv(gym.Env):
         self.current_step = 0
         self.total_recipients = len(self.group_data)
         self.allocations = np.zeros(self.total_recipients)
-        
+        self.final_allocations = None
         # Constraints from data
         self.B_max = self.group_data['max_budget'].iloc[0]
         self.min_alloc = self.group_data['min_allocation'].iloc[0]
@@ -64,11 +64,13 @@ class FairnessEnv(gym.Env):
         done = self.current_step >= self.total_recipients
         truncated = False
         
+        info = {}
         reward = 0
         if done:
+            info["allocations"] = self.allocations.copy()
             reward = self._calculate_reward()
             
-        return self._get_obs() if not done else np.zeros(self.observation_space.shape), reward, done, truncated, {}
+        return self._get_obs() if not done else np.zeros(self.observation_space.shape), reward, done, truncated, info
 
     def _calculate_reward(self):
         """Reward scaled to keep magnitudes small for PPO stability."""

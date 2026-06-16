@@ -70,6 +70,7 @@ def evaluate_single_file(filepath):
         payload = json.load(f)
     
     results = predict_from_payload(payload)
+    print("Predictions done")
     allocations = [item['rl_allocation'] for item in results['allocations']]
     xgb_scores = [item['xgb_reference'] for item in results['allocations']]
     
